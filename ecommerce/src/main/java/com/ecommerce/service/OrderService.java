@@ -1,0 +1,86 @@
+package com.ecommerce.service;
+
+import com.ecommerce.dto.CreateOrderRequest;
+import com.ecommerce.dto.OrderResponse;
+import com.ecommerce.model.Order;
+import com.ecommerce.model.OrderItem;
+import com.ecommerce.model.Product;
+import com.ecommerce.model.User;
+import com.ecommerce.repository.OrderItemRepository;
+import com.ecommerce.repository.OrderRepository;
+import com.ecommerce.repository.ProductRepository;
+import com.ecommerce.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+
+@Service
+public class OrderService {
+
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+
+    public OrderService(UserRepository userRepository,
+                        ProductRepository productRepository,
+                        OrderRepository orderRepository) {
+        this(userRepository, productRepository, orderRepository, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public OrderService(UserRepository userRepository,
+                        ProductRepository productRepository,
+                        OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository) {
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+    }
+
+    @Transactional
+    public OrderResponse createOrder(String email, CreateOrderRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        Product product = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        if (request.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+
+        if (product.getStock() < request.getQuantity()) {
+            throw new IllegalArgumentException("Not enough stock available");
+        }
+
+        product.setStock(product.getStock() - request.getQuantity());
+        productRepository.save(product);
+
+        Order order = new Order();
+        order.setUser(user);
+        order.setStatus("PENDING");
+        order.setTotal(product.getPrice() * request.getQuantity());
+        order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        Order savedOrder = orderRepository.save(order);
+
+        if (orderItemRepository != null) {
+            OrderItem item = new OrderItem();
+            item.setOrder(savedOrder);
+            item.setProduct(product);
+            item.setQuantity(request.getQuantity());
+            item.setPrice(product.getPrice());
+            orderItemRepository.save(item);
+        }
+
+        return new OrderResponse(
+                savedOrder.getId(),
+                product.getId(),
+                user.getEmail(),
+                request.getQuantity(),
+                savedOrder.getStatus()
+        );
+    }
+}
