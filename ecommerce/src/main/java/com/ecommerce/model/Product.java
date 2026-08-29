@@ -20,7 +20,10 @@ public class Product {
     @Column(nullable = false)
     private double price;
 
-    @Column(nullable = false)
+    @Column(name = "stock_quantity", nullable = false)
+    private int stockQuantity;
+
+    @Column(name = "stock", nullable = false)
     private int stock;
 
     public Product() {}
@@ -31,6 +34,7 @@ public class Product {
         this.description = description;
         this.price = price;
         this.stock = stock;
+        this.stockQuantity = stock;
     }
 
     public Long getId() { return id; }
@@ -46,5 +50,8 @@ public class Product {
     public void setPrice(double price) { this.price = price; }
 
     public int getStock() { return stock; }
-    public void setStock(int stock) { this.stock = stock; }
+    public void setStock(int stock) { this.stock = stock; this.stockQuantity = stock; }
+
+    public int getStockQuantity() { return stockQuantity; }
+    public void setStockQuantity(int stockQuantity) { this.stockQuantity = stockQuantity; this.stock = stockQuantity; }
 }

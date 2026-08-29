@@ -139,4 +139,24 @@ public class OrderService {
         }
         return responses;
     }
+
+    public org.springframework.data.domain.Page<OrderResponse> getOrdersForUser(String email, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Order> orders = orderRepository.findByUser_Email(email, pageable);
+        return orders.map(o -> {
+            java.util.List<com.ecommerce.dto.OrderItemResponse> items = new java.util.ArrayList<>();
+            if (o.getItems() != null) {
+                for (OrderItem oi : o.getItems()) {
+                    Product p = oi.getProduct();
+                    items.add(new com.ecommerce.dto.OrderItemResponse(
+                            p != null ? p.getId() : null,
+                            p != null ? p.getName() : null,
+                            oi.getQuantity(),
+                            oi.getPrice()
+                    ));
+                }
+            }
+            return new OrderResponse(o.getId(), o.getUser().getEmail(), o.getStatus(), o.getTotal(), items);
+        });
+    }
 }

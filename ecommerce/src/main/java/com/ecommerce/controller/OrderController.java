@@ -29,9 +29,11 @@ public class OrderController {
     }
 
     @org.springframework.web.bind.annotation.GetMapping("/orders")
-    public java.util.List<OrderResponse> listOrders() {
+    public org.springframework.data.domain.Page<OrderResponse> listOrders(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "10") int size) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication != null ? authentication.getName() : "guest@example.com";
-        return orderService.getOrdersForUser(userEmail);
+        return orderService.getOrdersForUser(userEmail, page, size);
     }
 }
