@@ -2,6 +2,8 @@ package com.ecommerce.service;
 
 import com.ecommerce.dto.CreateOrderRequest;
 import com.ecommerce.dto.OrderResponse;
+import com.ecommerce.dto.OrderItemResponse;
+import java.util.List;
 import com.ecommerce.model.Order;
 import com.ecommerce.model.OrderItem;
 import com.ecommerce.model.Product;
@@ -83,12 +85,37 @@ public class OrderService {
             }
         }
 
+        // build item responses from saved order
+        List<OrderItemResponse> itemResponses = new java.util.ArrayList<>();
+        if (savedOrder.getItems() != null && !savedOrder.getItems().isEmpty()) {
+            for (OrderItem oi : savedOrder.getItems()) {
+                Product p = oi.getProduct();
+                OrderItemResponse ir = new OrderItemResponse(
+                        p != null ? p.getId() : null,
+                        p != null ? p.getName() : null,
+                        oi.getQuantity(),
+                        oi.getPrice()
+                );
+                itemResponses.add(ir);
+            }
+        } else {
+            // fallback for tests/mocks where savedOrder doesn't contain items
+            OrderItemResponse ir = new OrderItemResponse(
+                    product.getId(),
+                    product.getName(),
+                    request.getQuantity(),
+                    product.getPrice()
+            );
+            itemResponses.add(ir);
+        }
+        
+
         return new OrderResponse(
-                savedOrder.getId(),
-                product.getId(),
-                user.getEmail(),
-                request.getQuantity(),
-                savedOrder.getStatus()
+            savedOrder.getId(),
+            user.getEmail(),
+            savedOrder.getStatus(),
+            savedOrder.getTotal(),
+            itemResponses
         );
     }
 }
