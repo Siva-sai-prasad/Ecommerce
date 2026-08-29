@@ -24,7 +24,7 @@ body {
   min-height: 100vh;
 }
 
-button, a {
+button, input, select, a {
   font: inherit;
 }
 
@@ -72,6 +72,10 @@ button, a {
   padding: 32px;
 }
 
+.page-container {
+  width: min(100%, 980px);
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -79,19 +83,30 @@ button, a {
   margin-bottom: 24px;
 }
 
-.topbar h1 {
+.topbar h1, .auth-card h1 {
   margin: 0;
   font-size: 2rem;
 }
 
-.primary-btn {
+.primary-btn,
+.secondary-btn,
+.page-btn {
   border: none;
-  background: #2563eb;
-  color: white;
-  padding: 10px 16px;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: white;
+  padding: 10px 16px;
+}
+
+.secondary-btn {
+  background: #e5e7eb;
+  color: #111827;
+  padding: 8px 12px;
 }
 
 .summary-grid {
@@ -102,7 +117,9 @@ button, a {
 }
 
 .summary-card,
-.orders-panel {
+.orders-panel,
+.product-card,
+.auth-card {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -214,4 +231,57 @@ button, a {
 .error-state {
   color: #b91c1c;
   font-weight: 600;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.product-card {
+  padding: 18px;
+}
+
+.product-card h3 {
+  margin: 0 0 8px;
+}
+
+.product-card p {
+  margin: 0 0 14px;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.auth-card {
+  width: min(100%, 420px);
+  padding: 24px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #374151;
+}
+
+.auth-form input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
 }
