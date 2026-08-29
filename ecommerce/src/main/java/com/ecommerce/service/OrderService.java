@@ -64,15 +64,23 @@ public class OrderService {
         order.setStatus("PENDING");
         order.setTotal(product.getPrice() * request.getQuantity());
         order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+
+        // create OrderItem and attach to Order so cascade persists it
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setQuantity(request.getQuantity());
+        item.setPrice(product.getPrice());
+        order.getItems().add(item);
+
         Order savedOrder = orderRepository.save(order);
 
+        // If repository exists, keep it for backward-compatibility (no-op/update)
         if (orderItemRepository != null) {
-            OrderItem item = new OrderItem();
-            item.setOrder(savedOrder);
-            item.setProduct(product);
-            item.setQuantity(request.getQuantity());
-            item.setPrice(product.getPrice());
-            orderItemRepository.save(item);
+            // The item should already be persisted via cascade; ensure consistency by saving if needed
+            if (item.getId() == null) {
+                orderItemRepository.save(item);
+            }
         }
 
         return new OrderResponse(
