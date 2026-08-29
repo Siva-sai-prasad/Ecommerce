@@ -118,4 +118,25 @@ public class OrderService {
             itemResponses
         );
     }
+
+    public java.util.List<OrderResponse> getOrdersForUser(String email) {
+        java.util.List<Order> orders = orderRepository.findByUser_Email(email);
+        java.util.List<OrderResponse> responses = new java.util.ArrayList<>();
+        for (Order o : orders) {
+            java.util.List<com.ecommerce.dto.OrderItemResponse> items = new java.util.ArrayList<>();
+            if (o.getItems() != null) {
+                for (OrderItem oi : o.getItems()) {
+                    Product p = oi.getProduct();
+                    items.add(new com.ecommerce.dto.OrderItemResponse(
+                            p != null ? p.getId() : null,
+                            p != null ? p.getName() : null,
+                            oi.getQuantity(),
+                            oi.getPrice()
+                    ));
+                }
+            }
+            responses.add(new OrderResponse(o.getId(), o.getUser().getEmail(), o.getStatus(), o.getTotal(), items));
+        }
+        return responses;
+    }
 }

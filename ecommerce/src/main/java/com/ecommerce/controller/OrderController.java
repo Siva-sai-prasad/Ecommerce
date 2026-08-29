@@ -27,4 +27,11 @@ public class OrderController {
 
         return orderService.createOrder(userEmail, request);
     }
+
+    @org.springframework.web.bind.annotation.GetMapping("/orders")
+    public java.util.List<OrderResponse> listOrders() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication != null ? authentication.getName() : "guest@example.com";
+        return orderService.getOrdersForUser(userEmail);
+    }
 }
