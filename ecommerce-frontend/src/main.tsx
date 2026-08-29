@@ -27,6 +27,15 @@ type OrdersPage = {
 };
 
 const API_BASE_URL = 'http://localhost:8080/api';
+const catalog = [
+  { id: 1, name: 'Laptop', price: 999.0, tag: 'Featured' },
+  { id: 2, name: 'Headphones', price: 89.99, tag: 'Popular' },
+  { id: 3, name: 'Phone', price: 599.0, tag: 'New' },
+  { id: 4, name: 'Smart Watch', price: 179.0, tag: 'Trending' },
+];
+
+const cartItems: Array<{ id: number; name: string; price: number; quantity: number }> = [];
+
 let currentPage = 0;
 let pageSize = 5;
 let sortField = 'createdAt';
@@ -49,17 +58,34 @@ async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersP
   return response.json();
 }
 
+function updateCartBadge() {
+  const badge = document.getElementById('cart-badge');
+  const total = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (badge) {
+    badge.textContent = String(total);
+    badge.hidden = total === 0;
+  }
+}
+
 function renderShell() {
   if (!app) return;
 
   app.innerHTML = `
     <div class="app-shell">
       <aside class="sidebar">
-        <div class="brand">ShopFlow</div>
+        <div class="brand-wrap">
+          <div class="brand-logo">S</div>
+          <div class="brand-copy">
+            <span class="brand-name">ShopFlow</span>
+            <small>Commerce</small>
+          </div>
+        </div>
         <nav class="nav">
           <a href="#" data-view="dashboard">Dashboard</a>
           <a href="#" data-view="products">Products</a>
           <a href="#" data-view="orders" class="active">Orders</a>
+          <a href="#" data-view="cart">Cart <span id="cart-badge" class="cart-badge" hidden>0</span></a>
           <a href="#" data-view="login">Login</a>
         </nav>
       </aside>
@@ -69,6 +95,8 @@ function renderShell() {
       </main>
     </div>
   `;
+
+  updateCartBadge();
 
   document.querySelectorAll('[data-view]').forEach((link) => {
     link.addEventListener('click', (event) => {
@@ -82,6 +110,20 @@ function renderShell() {
   });
 }
 
+function addToCart(productId: number) {
+  const product = catalog.find((item) => item.id === productId);
+  if (!product) return;
+
+  const existing = cartItems.find((item) => item.id === productId);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cartItems.push({ id: product.id, name: product.name, price: product.price, quantity: 1 });
+  }
+
+  updateCartBadge();
+}
+
 function renderDashboard() {
   return `
     <div class="page-container">
@@ -90,18 +132,30 @@ function renderDashboard() {
         <button class="primary-btn" type="button">Overview</button>
       </header>
 
+      <section class="feature-banner">
+        <div>
+          <span class="chip">Live overview</span>
+          <h2>Skyline commerce is growing fast.</h2>
+          <p>Track performance, customer orders, and sales across your storefront.</p>
+        </div>
+        <button class="primary-btn" type="button">View report</button>
+      </section>
+
       <section class="summary-grid">
-        <div class="summary-card">
+        <div class="summary-card accent-card">
           <span>Revenue</span>
           <strong>$12,480</strong>
+          <small>+18.2% this month</small>
         </div>
         <div class="summary-card">
           <span>Orders</span>
           <strong>128</strong>
+          <small>24 waiting for shipment</small>
         </div>
         <div class="summary-card">
           <span>Customers</span>
           <strong>94</strong>
+          <small>12 new this week</small>
         </div>
       </section>
     </div>
@@ -109,12 +163,6 @@ function renderDashboard() {
 }
 
 function renderProducts() {
-  const products = [
-    { name: 'Laptop', price: 999.0 },
-    { name: 'Headphones', price: 89.99 },
-    { name: 'Phone', price: 599.0 },
-  ];
-
   return `
     <div class="page-container">
       <header class="topbar">
@@ -123,18 +171,64 @@ function renderProducts() {
       </header>
 
       <div class="product-grid">
-        ${products
+        ${catalog
           .map(
             (product) => `
               <div class="product-card">
+                <span class="product-tag">${product.tag}</span>
+                <div class="product-icon">▣</div>
                 <h3>${product.name}</h3>
                 <p>$${product.price.toFixed(2)}</p>
-                <button type="button" class="secondary-btn">Add to cart</button>
+                <button type="button" class="secondary-btn add-to-cart-btn" data-product-id="${product.id}">Add to cart</button>
               </div>
             `,
           )
           .join('')}
       </div>
+    </div>
+  `;
+
+  document.querySelectorAll('.add-to-cart-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const productId = Number((button as HTMLElement).dataset.productId);
+      addToCart(productId);
+    });
+  });
+}
+
+function renderCartPage() {
+  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return `
+    <div class="page-container">
+      <header class="topbar">
+        <h1>Cart</h1>
+        <button class="primary-btn" type="button">Checkout</button>
+      </header>
+
+      ${cartItems.length === 0
+        ? '<div class="empty-cart">Your cart is empty. Add products to continue.</div>'
+        : `
+          <div class="cart-list">
+            ${cartItems
+              .map(
+                (item) => `
+                  <div class="cart-item">
+                    <div>
+                      <strong>${item.name}</strong>
+                      <span>Qty ${item.quantity}</span>
+                    </div>
+                    <div class="cart-price">$${(item.price * item.quantity).toFixed(2)}</div>
+                  </div>
+                `,
+              )
+              .join('')}
+          </div>
+          <div class="cart-summary">
+            <span>Total</span>
+            <strong>$${total.toFixed(2)}</strong>
+          </div>
+        `}
     </div>
   `;
 }
@@ -143,7 +237,8 @@ function renderLogin() {
   return `
     <div class="page-container form-container">
       <div class="auth-card">
-        <h1>Login</h1>
+        <p class="auth-kicker">Customer login</p>
+        <h1>Welcome back</h1>
         <form class="auth-form">
           <label>
             Email
@@ -153,7 +248,15 @@ function renderLogin() {
             Password
             <input type="password" placeholder="••••••••" />
           </label>
-          <button type="submit" class="primary-btn">Sign in</button>
+
+          <div class="auth-helpers">
+            <span class="text-link">Forgot password</span>
+          </div>
+
+          <div class="auth-actions">
+            <button type="submit" class="primary-btn">Sign in</button>
+            <button type="button" class="secondary-btn light-btn">Sign up</button>
+          </div>
         </form>
       </div>
     </div>
@@ -242,6 +345,18 @@ function renderView() {
 
   if (currentView === 'products') {
     pageRoot.innerHTML = renderProducts();
+    const addBtns = document.querySelectorAll('.add-to-cart-btn');
+    addBtns.forEach((button) => {
+      button.addEventListener('click', () => {
+        const productId = Number((button as HTMLElement).dataset.productId);
+        addToCart(productId);
+      });
+    });
+    return;
+  }
+
+  if (currentView === 'cart') {
+    pageRoot.innerHTML = renderCartPage();
     return;
   }
 

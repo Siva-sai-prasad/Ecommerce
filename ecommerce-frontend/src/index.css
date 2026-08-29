@@ -1,13 +1,20 @@
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #1f2937;
-  background: #f5f7fb;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --sky-50: #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-500: #38bdf8;
+  --sky-600: #0ea5e9;
+  --sky-700: #0369a1;
+  --sky-800: #075985;
+  --white: #ffffff;
+  --slate-100: #f8fafc;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-500: #64748b;
+  --slate-700: #334155;
+  --slate-900: #0f172a;
+  --shadow-soft: 0 18px 40px rgba(14, 165, 233, 0.12);
 }
 
 * {
@@ -22,6 +29,8 @@ html, body, #app {
 
 body {
   min-height: 100vh;
+  background: linear-gradient(180deg, var(--sky-50) 0%, #eff6ff 100%);
+  color: var(--slate-900);
 }
 
 button, input, select, a {
@@ -31,40 +40,79 @@ button, input, select, a {
 .app-shell {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fb;
-  color: #1f2937;
+  background: linear-gradient(180deg, #f0f9ff 0%, #f8fbff 100%);
+  color: var(--slate-900);
 }
 
 .sidebar {
-  width: 240px;
-  background: #111827;
-  color: #f9fafb;
-  padding: 32px 24px;
+  width: 200px;
+  background: linear-gradient(180deg, var(--sky-700) 0%, var(--sky-600) 100%);
+  color: var(--white);
+  padding: 20px 14px;
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.2);
 }
 
-.brand {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 32px;
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08));
+  color: var(--white);
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+}
+
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brand-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.brand-copy small {
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.58rem;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .nav a {
   text-decoration: none;
-  color: #d1d5db;
-  padding: 10px 12px;
-  border-radius: 8px;
-  transition: background 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 9px 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
 .nav a.active,
 .nav a:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.14);
+  transform: translateX(2px);
 }
 
 .main-panel {
@@ -86,32 +134,41 @@ button, input, select, a {
 .topbar h1, .auth-card h1 {
   margin: 0;
   font-size: 2rem;
+  color: var(--slate-900);
 }
 
 .primary-btn,
 .secondary-btn,
 .page-btn {
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-weight: 700;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .primary-btn {
-  background: #2563eb;
-  color: white;
+  background: linear-gradient(135deg, var(--sky-600) 0%, var(--sky-500) 100%);
+  color: var(--white);
   padding: 10px 16px;
+  box-shadow: 0 10px 20px rgba(56, 189, 248, 0.28);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover,
+.page-btn:hover {
+  transform: translateY(-1px);
 }
 
 .secondary-btn {
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--sky-100);
+  color: var(--sky-800);
   padding: 8px 12px;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -119,26 +176,39 @@ button, input, select, a {
 .summary-card,
 .orders-panel,
 .product-card,
-.auth-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+.auth-card,
+.feature-banner {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
 }
 
 .summary-card {
-  padding: 20px;
+  padding: 22px 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.summary-card span {
-  color: #6b7280;
+.accent-card {
+  background: linear-gradient(135deg, var(--sky-500) 0%, var(--sky-600) 100%);
+  color: var(--white);
+}
+
+.accent-card span,
+.accent-card small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.summary-card span,
+.summary-card small {
+  color: var(--slate-500);
 }
 
 .summary-card strong {
   font-size: 1.8rem;
+  letter-spacing: -0.04em;
 }
 
 .orders-panel {
@@ -155,6 +225,7 @@ button, input, select, a {
 
 .panel-header h2 {
   margin: 0;
+  color: var(--slate-900);
 }
 
 .toolbar {
@@ -167,17 +238,17 @@ button, input, select, a {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #4b5563;
+  color: var(--slate-700);
   font-size: 0.95rem;
 }
 
 .toolbar select,
 .page-btn {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
   padding: 8px 10px;
-  background: white;
-  color: #1f2937;
+  background: var(--white);
+  color: var(--slate-900);
 }
 
 .orders-table {
@@ -190,24 +261,24 @@ button, input, select, a {
   grid-template-columns: 1.2fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.2);
   align-items: center;
 }
 
 .table-head {
-  color: #6b7280;
-  font-weight: 600;
+  color: var(--slate-500);
+  font-weight: 700;
 }
 
 .status-pill {
   display: inline-block;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--sky-100);
+  color: var(--sky-700);
   border-radius: 999px;
   padding: 6px 10px;
   width: fit-content;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .pagination-row {
@@ -225,11 +296,11 @@ button, input, select, a {
 .empty-state,
 .error-state {
   padding: 18px 0 8px;
-  color: #6b7280;
+  color: var(--slate-500);
 }
 
 .error-state {
-  color: #b91c1c;
+  color: #be123c;
   font-weight: 600;
 }
 
@@ -242,16 +313,141 @@ button, input, select, a {
 
 .product-card {
   padding: 18px;
+  background: linear-gradient(180deg, var(--white) 0%, var(--sky-50) 100%);
+}
+
+.product-tag {
+  display: inline-flex;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.cart-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.empty-cart {
+  padding: 24px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px dashed rgba(14, 165, 233, 0.4);
+  color: var(--slate-500);
+}
+
+.cart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+}
+
+.cart-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.cart-item span {
+  color: var(--slate-500);
+}
+
+.cart-price {
+  font-weight: 700;
+  color: var(--sky-700);
+}
+
+.cart-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(125, 211, 252, 0.25);
+  font-size: 1.1rem;
+}
+
+.cart-summary strong {
+  color: var(--sky-700);
+}
+
+.product-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--sky-200), var(--sky-100));
+  color: var(--sky-700);
+  font-size: 1.5rem;
+  margin: 16px 0 12px;
 }
 
 .product-card h3 {
   margin: 0 0 8px;
+  color: var(--slate-900);
 }
 
 .product-card p {
   margin: 0 0 14px;
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--sky-700);
+}
+
+.feature-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 26px 24px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #edf9ff 0%, #ffffff 100%);
+}
+
+.feature-banner h2 {
+  margin: 10px 0 6px;
+  font-size: clamp(1.5rem, 2vw, 2.2rem);
+  color: var(--slate-900);
+}
+
+.feature-banner p {
+  margin: 0;
+  color: var(--slate-500);
+}
+
+.chip {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  color: var(--sky-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .form-container {
@@ -264,6 +460,16 @@ button, input, select, a {
 .auth-card {
   width: min(100%, 420px);
   padding: 24px;
+  background: linear-gradient(180deg, var(--white) 0%, var(--sky-50) 100%);
+}
+
+.auth-kicker {
+  margin: 0 0 8px;
+  color: var(--sky-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .auth-form {
@@ -277,11 +483,41 @@ button, input, select, a {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: #374151;
+  color: var(--slate-700);
 }
 
 .auth-form input {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
   padding: 10px 12px;
+  background: var(--white);
+}
+
+.auth-helpers {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.text-link {
+  color: var(--sky-700);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.auth-actions .primary-btn,
+.auth-actions .secondary-btn {
+  flex: 1;
+}
+
+.light-btn {
+  background: var(--white);
+  color: var(--sky-700);
+  border: 1px solid rgba(14, 165, 233, 0.3);
 }
