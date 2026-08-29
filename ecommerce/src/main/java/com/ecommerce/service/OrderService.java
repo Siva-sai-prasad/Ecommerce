@@ -142,6 +142,10 @@ public class OrderService {
 
     public org.springframework.data.domain.Page<OrderResponse> getOrdersForUser(String email, int page, int size) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return getOrdersForUser(email, pageable);
+    }
+
+    public org.springframework.data.domain.Page<OrderResponse> getOrdersForUser(String email, org.springframework.data.domain.Pageable pageable) {
         org.springframework.data.domain.Page<Order> orders = orderRepository.findByUser_Email(email, pageable);
         return orders.map(o -> {
             java.util.List<com.ecommerce.dto.OrderItemResponse> items = new java.util.ArrayList<>();
