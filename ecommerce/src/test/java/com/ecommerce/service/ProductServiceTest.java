@@ -25,6 +25,7 @@ class ProductServiceTest {
         product.setDescription("Gaming laptop");
         product.setPrice(1200.0);
         product.setStock(10);
+        product.setImageUrl("https://example.com/laptop.jpg");
 
         when(repository.findAll()).thenReturn(List.of(product));
 
@@ -33,6 +34,7 @@ class ProductServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Laptop", result.get(0).getName());
+        assertEquals("https://example.com/laptop.jpg", result.get(0).getImageUrl());
     }
 
     @Test
@@ -44,6 +46,7 @@ class ProductServiceTest {
         product.setDescription("Wireless mouse");
         product.setPrice(45.0);
         product.setStock(25);
+        product.setImageUrl("https://example.com/mouse.jpg");
 
         when(repository.save(org.mockito.ArgumentMatchers.any(Product.class))).thenReturn(product);
 
@@ -53,12 +56,14 @@ class ProductServiceTest {
         request.setDescription("Wireless mouse");
         request.setPrice(45.0);
         request.setStock(25);
+        request.setImageUrl("https://example.com/mouse.jpg");
 
         ProductResponse response = service.createProduct(request);
 
         assertNotNull(response);
         assertEquals("Mouse", response.getName());
         assertEquals(25, response.getStock());
+        assertEquals("https://example.com/mouse.jpg", response.getImageUrl());
     }
 
     @Test
@@ -70,6 +75,7 @@ class ProductServiceTest {
         product.setDescription("Noise cancelling headset");
         product.setPrice(250.0);
         product.setStock(12);
+        product.setImageUrl("https://example.com/headphones.jpg");
 
         when(repository.findById(2L)).thenReturn(Optional.of(product));
 
@@ -78,5 +84,6 @@ class ProductServiceTest {
 
         assertEquals("Headphones", response.getName());
         assertEquals(12, response.getStock());
+        assertEquals("https://example.com/headphones.jpg", response.getImageUrl());
     }
 }

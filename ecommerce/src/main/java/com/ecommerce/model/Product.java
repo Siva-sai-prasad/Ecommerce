@@ -26,6 +26,9 @@ public class Product {
     @Column(name = "stock", nullable = false)
     private int stock;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     public Product() {}
 
     public Product(Long id, String name, String description, double price, int stock) {
@@ -54,4 +57,7 @@ public class Product {
 
     public int getStockQuantity() { return stockQuantity; }
     public void setStockQuantity(int stockQuantity) { this.stockQuantity = stockQuantity; this.stock = stockQuantity; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

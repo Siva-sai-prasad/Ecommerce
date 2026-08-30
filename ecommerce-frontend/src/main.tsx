@@ -26,12 +26,53 @@ type OrdersPage = {
   size: number;
 };
 
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  tag: string;
+  description: string;
+  imageUrl: string;
+};
+
 const API_BASE_URL = 'http://localhost:8080/api';
-const catalog = [
-  { id: 1, name: 'Laptop', price: 999.0, tag: 'Featured' },
-  { id: 2, name: 'Headphones', price: 89.99, tag: 'Popular' },
-  { id: 3, name: 'Phone', price: 599.0, tag: 'New' },
-  { id: 4, name: 'Smart Watch', price: 179.0, tag: 'Trending' },
+const AUTH_BASE_URL = 'http://localhost:8080';
+const AUTH_TOKEN_KEY = 'ecommerce.jwt';
+const USER_NAME_KEY = 'ecommerce.userName';
+
+const catalog: Product[] = [
+  {
+    id: 1,
+    name: 'Laptop',
+    price: 999.0,
+    tag: 'Featured',
+    description: 'Lightweight business laptop for daily productivity.',
+    imageUrl: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 2,
+    name: 'Headphones',
+    price: 89.99,
+    tag: 'Popular',
+    description: 'Noise-cancelling headphones with a warm bass profile.',
+    imageUrl: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 3,
+    name: 'Phone',
+    price: 599.0,
+    tag: 'New',
+    description: 'Premium smartphone with crisp camera performance.',
+    imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    id: 4,
+    name: 'Smart Watch',
+    price: 179.0,
+    tag: 'Trending',
+    description: 'Fitness-focused smartwatch with health tracking.',
+    imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80',
+  },
 ];
 
 const cartItems: Array<{ id: number; name: string; price: number; quantity: number }> = [];
@@ -40,14 +81,40 @@ let currentPage = 0;
 let pageSize = 5;
 let sortField = 'createdAt';
 let sortDirection = 'desc';
-let currentView = 'orders';
+let currentView = 'products';
+let authMode: 'login' | 'signup' = 'login';
+let authMessage = '';
+
+function getStoredToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY) ?? '';
+}
+
+function getStoredUserName() {
+  return localStorage.getItem(USER_NAME_KEY) ?? 'Customer';
+}
+
+function saveUserSession(token: string, name: string) {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  localStorage.setItem(USER_NAME_KEY, name);
+}
+
+function clearUserSession() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(USER_NAME_KEY);
+}
+
+function isLoggedIn() {
+  return Boolean(getStoredToken());
+}
 
 async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersPage> {
   const url = `${API_BASE_URL}/orders?page=${page}&size=${size}&sort=${sortField},${sortDirection}`;
+  const token = getStoredToken();
 
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
   });
 
@@ -56,6 +123,74 @@ async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersP
   }
 
   return response.json();
+}
+
+async function fetchCurrentUser() {
+  const token = getStoredToken();
+  const response = await fetch(`${API_BASE_URL}/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to load account');
+  }
+
+  return response.json();
+}
+
+async function handleAuthSubmit(event: SubmitEvent) {
+  event.preventDefault();
+
+  const form = event.target as HTMLFormElement;
+  const formData = new FormData(form);
+  const email = String(formData.get('email') ?? '').trim();
+  const password = String(formData.get('password') ?? '').trim();
+  const name = String(formData.get('name') ?? '').trim();
+
+  const endpoint = `${AUTH_BASE_URL}/auth/${authMode === 'signup' ? 'signup' : 'login'}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(
+        authMode === 'signup'
+          ? { name, email, password }
+          : { email, password },
+      ),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(payload.message ?? 'Authentication failed');
+    }
+
+    if (authMode === 'signup') {
+      authMode = 'login';
+      authMessage = 'Account created successfully. Please sign in.';
+      renderView();
+      return;
+    }
+
+    const token = payload.token;
+    if (!token) {
+      throw new Error('No token returned from the server');
+    }
+
+    const profile = await fetchCurrentUser();
+    saveUserSession(token, profile.name ?? email);
+    authMessage = '';
+    currentView = 'products';
+    renderView();
+  } catch (error) {
+    authMessage = error instanceof Error ? error.message : 'Authentication failed';
+    renderView();
+  }
 }
 
 function updateCartBadge() {
@@ -84,9 +219,10 @@ function renderShell() {
         <nav class="nav">
           <a href="#" data-view="dashboard">Dashboard</a>
           <a href="#" data-view="products">Products</a>
-          <a href="#" data-view="orders" class="active">Orders</a>
+          <a href="#" data-view="orders">Orders</a>
           <a href="#" data-view="cart">Cart <span id="cart-badge" class="cart-badge" hidden>0</span></a>
-          <a href="#" data-view="login">Login</a>
+          <a href="#" data-view="login">${isLoggedIn() ? getStoredUserName() : 'Login'}</a>
+          ${isLoggedIn() ? '<button class="nav-action" id="logout-btn" type="button">Logout</button>' : ''}
         </nav>
       </aside>
 
@@ -103,10 +239,21 @@ function renderShell() {
       event.preventDefault();
       const target = (event.currentTarget as HTMLElement).dataset.view;
       if (target) {
-        currentView = target;
+        if (target === 'login' && isLoggedIn()) {
+          currentView = 'products';
+        } else {
+          currentView = target;
+        }
         renderView();
       }
     });
+  });
+
+  const logoutBtn = document.getElementById('logout-btn');
+  logoutBtn?.addEventListener('click', () => {
+    clearUserSession();
+    currentView = 'login';
+    renderView();
   });
 }
 
@@ -167,7 +314,7 @@ function renderProducts() {
     <div class="page-container">
       <header class="topbar">
         <h1>Products</h1>
-        <button class="primary-btn" type="button">Add Product</button>
+        <button class="primary-btn" type="button">New arrival</button>
       </header>
 
       <div class="product-grid">
@@ -176,10 +323,13 @@ function renderProducts() {
             (product) => `
               <div class="product-card">
                 <span class="product-tag">${product.tag}</span>
-                <div class="product-icon">▣</div>
+                <img class="product-image" src="${product.imageUrl}" alt="${product.name}" />
                 <h3>${product.name}</h3>
-                <p>$${product.price.toFixed(2)}</p>
-                <button type="button" class="secondary-btn add-to-cart-btn" data-product-id="${product.id}">Add to cart</button>
+                <p class="product-description">${product.description}</p>
+                <div class="product-footer">
+                  <span class="product-price">$${product.price.toFixed(2)}</span>
+                  <button type="button" class="secondary-btn add-to-cart-btn" data-product-id="${product.id}">Add to cart</button>
+                </div>
               </div>
             `,
           )
@@ -234,19 +384,32 @@ function renderCartPage() {
 }
 
 function renderLogin() {
+  const isLoginMode = authMode === 'login';
+
   return `
     <div class="page-container form-container">
       <div class="auth-card">
-        <p class="auth-kicker">Customer login</p>
-        <h1>Welcome back</h1>
-        <form class="auth-form">
+        <p class="auth-kicker">${isLoginMode ? 'Customer login' : 'Create account'}</p>
+        <h1>${isLoginMode ? 'Welcome back' : 'Join our store'}</h1>
+
+        ${authMessage ? `<p class="auth-message">${authMessage}</p>` : ''}
+
+        <form class="auth-form" id="auth-form">
+          ${!isLoginMode ? `
+            <label>
+              Full name
+              <input name="name" type="text" placeholder="Your name" required />
+            </label>
+          ` : ''}
+
           <label>
             Email
-            <input type="email" placeholder="name@example.com" />
+            <input name="email" type="email" placeholder="name@example.com" required />
           </label>
+
           <label>
             Password
-            <input type="password" placeholder="••••••••" />
+            <input name="password" type="password" placeholder="••••••••" required />
           </label>
 
           <div class="auth-helpers">
@@ -254,8 +417,8 @@ function renderLogin() {
           </div>
 
           <div class="auth-actions">
-            <button type="submit" class="primary-btn">Sign in</button>
-            <button type="button" class="secondary-btn light-btn">Sign up</button>
+            <button type="submit" class="primary-btn">${isLoginMode ? 'Sign in' : 'Sign up'}</button>
+            <button type="button" class="secondary-btn light-btn" id="toggle-auth-mode">${isLoginMode ? 'Sign up' : 'Sign in'}</button>
           </div>
         </form>
       </div>
@@ -362,6 +525,15 @@ function renderView() {
 
   if (currentView === 'login') {
     pageRoot.innerHTML = renderLogin();
+    const form = document.getElementById('auth-form');
+    form?.addEventListener('submit', handleAuthSubmit);
+
+    const toggleButton = document.getElementById('toggle-auth-mode');
+    toggleButton?.addEventListener('click', () => {
+      authMode = authMode === 'login' ? 'signup' : 'login';
+      authMessage = '';
+      renderView();
+    });
     return;
   }
 

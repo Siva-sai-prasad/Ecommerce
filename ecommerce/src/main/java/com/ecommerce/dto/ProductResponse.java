@@ -6,6 +6,7 @@ public class ProductResponse {
     private String description;
     private double price;
     private int stock;
+    private String imageUrl;
 
     public ProductResponse() {}
 
@@ -24,6 +25,15 @@ public class ProductResponse {
         this.stock = stock;
     }
 
+    public ProductResponse(Long id, String name, String description, double price, int stock, String imageUrl) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+        this.imageUrl = imageUrl;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -38,4 +48,7 @@ public class ProductResponse {
 
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

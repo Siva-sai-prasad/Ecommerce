@@ -5,6 +5,7 @@ public class ProductRequest {
     private String description;
     private double price;
     private int stock;
+    private String imageUrl;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -17,4 +18,7 @@ public class ProductRequest {
 
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
