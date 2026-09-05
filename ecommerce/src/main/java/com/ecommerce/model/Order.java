@@ -24,6 +24,9 @@ public class Order {
     @Column(nullable = false)
     private double total;
 
+    @Column(name = "total_amount", nullable = false)
+    private double totalAmount;
+
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
 
@@ -42,7 +45,10 @@ public class Order {
     public void setStatus(String status) { this.status = status; }
 
     public double getTotal() { return total; }
-    public void setTotal(double total) { this.total = total; }
+    public void setTotal(double total) {
+        this.total = total;
+        this.totalAmount = total;
+    }
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

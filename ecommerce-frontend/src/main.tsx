@@ -11,7 +11,7 @@ type OrderItem = {
 };
 
 type Order = {
-  id: number;
+  orderId: number;
   userEmail: string;
   status: string;
   total: number;
@@ -45,7 +45,7 @@ const AUTH_BASE_URL = 'http://localhost:8080';
 const AUTH_TOKEN_KEY = 'ecommerce.jwt';
 const USER_NAME_KEY = 'ecommerce.userName';
 
-const catalog: Product[] = [
+let catalog: Product[] = [
   {
     id: 1,
     name: 'Laptop',
@@ -128,6 +128,19 @@ async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersP
   }
 
   return response.json();
+}
+
+async function fetchProducts(): Promise<Product[]> {
+  const response = await fetch(`${API_BASE_URL}/products`);
+  if (!response.ok) {
+    throw new Error(`Failed to load products: ${response.status}`);
+  }
+
+  const products = await response.json();
+  return products.map((product: Omit<Product, 'tag'>, index: number) => ({
+    ...product,
+    tag: ['Featured', 'Popular', 'New', 'Trending'][index % 4],
+  }));
 }
 
 async function fetchCurrentUser() {
@@ -403,12 +416,25 @@ function renderProducts() {
     </div>
   `;
 
+}
+
+function bindProductButtons() {
   document.querySelectorAll('.add-to-cart-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const productId = Number((button as HTMLElement).dataset.productId);
       addToCart(productId);
     });
   });
+}
+
+async function loadProductsForView(pageRoot: HTMLElement) {
+  try {
+    catalog = await fetchProducts();
+    pageRoot.innerHTML = renderProducts();
+    bindProductButtons();
+  } catch (error) {
+    pageRoot.innerHTML = `<div class="error-state">${error instanceof Error ? error.message : 'Failed to load products.'}</div>`;
+  }
 }
 
 function renderCartPage() {
@@ -574,14 +600,8 @@ function renderView() {
   }
 
   if (currentView === 'products') {
-    pageRoot.innerHTML = renderProducts();
-    const addBtns = document.querySelectorAll('.add-to-cart-btn');
-    addBtns.forEach((button) => {
-      button.addEventListener('click', () => {
-        const productId = Number((button as HTMLElement).dataset.productId);
-        addToCart(productId);
-      });
-    });
+    pageRoot.innerHTML = '<div class="empty-state">Loading products...</div>';
+    void loadProductsForView(pageRoot);
     return;
   }
 
@@ -653,7 +673,7 @@ function renderOrders(pageData: OrdersPage | null) {
     .map(
       (order: Order) => `
         <div class="table-row">
-          <span>#${order.id}</span>
+          <span>#${order.orderId}</span>
           <span class="status-pill">${order.status}</span>
           <span>$${Number(order.total || 0).toFixed(2)}</span>
           <span>${order.items?.length ?? 0}</span>
