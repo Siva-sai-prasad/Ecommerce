@@ -304,6 +304,12 @@ button, input, select, a {
   font-weight: 600;
 }
 
+.success-state {
+  padding: 18px 0 8px;
+  color: #15803d;
+  font-weight: 600;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -491,6 +497,21 @@ button, input, select, a {
   background: linear-gradient(180deg, var(--white) 0%, var(--sky-50) 100%);
 }
 
+.product-form-card {
+  width: min(100%, 560px);
+}
+
+.form-note {
+  margin: 8px 0 0;
+  color: var(--slate-500);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .auth-message {
   margin: 12px 0 0;
   color: var(--sky-700);
@@ -525,6 +546,14 @@ button, input, select, a {
   border-radius: 10px;
   padding: 10px 12px;
   background: var(--white);
+}
+
+.auth-form textarea {
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--white);
+  resize: vertical;
 }
 
 .auth-helpers {

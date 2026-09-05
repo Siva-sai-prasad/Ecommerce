@@ -143,6 +143,32 @@ async function fetchProducts(): Promise<Product[]> {
   }));
 }
 
+async function createProduct(form: HTMLFormElement) {
+  const formData = new FormData(form);
+  const token = getStoredToken();
+  const response = await fetch(`${API_BASE_URL}/admin/products`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      name: String(formData.get('name') ?? '').trim(),
+      description: String(formData.get('description') ?? '').trim(),
+      price: Number(formData.get('price')),
+      stock: Number(formData.get('stock')),
+      imageUrl: String(formData.get('imageUrl') ?? '').trim(),
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message ?? `Product creation failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<Product>;
+}
+
 async function fetchCurrentUser() {
   const token = getStoredToken();
   const response = await fetch(`${API_BASE_URL}/me`, {
@@ -297,6 +323,7 @@ function renderShell() {
         <nav class="nav">
           <a href="#" data-view="dashboard">Dashboard</a>
           <a href="#" data-view="products">Products</a>
+          <a href="#" data-view="admin-products">Manage products</a>
           <a href="#" data-view="orders">Orders</a>
           <a href="#" data-view="cart">Cart <span id="cart-badge" class="cart-badge" hidden>0</span></a>
           <a href="#" data-view="login">${isLoggedIn() ? getStoredUserName() : 'Login'}</a>
@@ -416,6 +443,44 @@ function renderProducts() {
     </div>
   `;
 
+}
+
+function renderAdminProducts() {
+  return `
+    <div class="page-container form-container">
+      <div class="auth-card product-form-card">
+        <p class="auth-kicker">Catalog management</p>
+        <h1>Add a product</h1>
+        <p class="form-note">Create inventory that customers can purchase immediately.</p>
+        <form class="auth-form" id="product-form">
+          <label>
+            Product name
+            <input name="name" type="text" placeholder="Wireless keyboard" required />
+          </label>
+          <label>
+            Description
+            <textarea name="description" rows="3" placeholder="Short product description" required></textarea>
+          </label>
+          <div class="form-row">
+            <label>
+              Price
+              <input name="price" type="number" min="0.01" step="0.01" placeholder="49.99" required />
+            </label>
+            <label>
+              Stock
+              <input name="stock" type="number" min="1" step="1" placeholder="20" required />
+            </label>
+          </div>
+          <label>
+            JPG image URL
+            <input name="imageUrl" type="url" placeholder="https://example.com/product.jpg" required />
+          </label>
+          <div id="product-form-message" class="empty-state"></div>
+          <button type="submit" class="primary-btn">Save product</button>
+        </form>
+      </div>
+    </div>
+  `;
 }
 
 function bindProductButtons() {
@@ -602,6 +667,31 @@ function renderView() {
   if (currentView === 'products') {
     pageRoot.innerHTML = '<div class="empty-state">Loading products...</div>';
     void loadProductsForView(pageRoot);
+    return;
+  }
+
+  if (currentView === 'admin-products') {
+    pageRoot.innerHTML = renderAdminProducts();
+    const form = document.getElementById('product-form') as HTMLFormElement | null;
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const message = document.getElementById('product-form-message');
+
+      try {
+        await createProduct(form);
+        catalog = await fetchProducts();
+        form.reset();
+        if (message) {
+          message.textContent = 'Product saved. It is now available in the storefront.';
+          message.className = 'success-state';
+        }
+      } catch (error) {
+        if (message) {
+          message.textContent = error instanceof Error ? error.message : 'Product creation failed.';
+          message.className = 'error-state';
+        }
+      }
+    });
     return;
   }
 
