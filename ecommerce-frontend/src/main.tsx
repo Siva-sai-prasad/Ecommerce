@@ -332,7 +332,7 @@ function renderShell() {
           </div>
         </div>
         <nav class="nav">
-          <a href="#" data-view="dashboard">Dashboard</a>
+          ${isAdmin() ? '<a href="#" data-view="dashboard">Admin dashboard</a>' : ''}
           <a href="#" data-view="products">Products</a>
           ${isAdmin() ? '<a href="#" data-view="admin-products">Manage products</a>' : ''}
           <a href="#" data-view="orders">Orders</a>
@@ -391,7 +391,7 @@ function renderDashboard() {
   return `
     <div class="page-container">
       <header class="topbar">
-        <h1>Dashboard</h1>
+        <h1>Admin dashboard</h1>
         <button class="primary-btn" type="button">Overview</button>
       </header>
 
