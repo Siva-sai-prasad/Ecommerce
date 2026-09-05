@@ -26,6 +26,11 @@ type OrdersPage = {
   size: number;
 };
 
+type CreateOrderRequest = {
+  productId: number;
+  quantity: number;
+};
+
 type Product = {
   id: number;
   name: string;
@@ -138,6 +143,65 @@ async function fetchCurrentUser() {
   }
 
   return response.json();
+}
+
+async function submitOrder(request: CreateOrderRequest) {
+  const token = getStoredToken();
+  const response = await fetch(`${API_BASE_URL}/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message ?? `Checkout failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<Order>;
+}
+
+async function handleCheckout() {
+  if (!isLoggedIn()) {
+    authMode = 'login';
+    authMessage = 'Please sign in before checkout.';
+    currentView = 'login';
+    renderView();
+    return;
+  }
+
+  if (cartItems.length === 0) return;
+
+  const checkoutButton = document.getElementById('checkout-btn') as HTMLButtonElement | null;
+  if (checkoutButton) {
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = 'Processing...';
+  }
+
+  try {
+    for (const item of cartItems) {
+      await submitOrder({ productId: item.id, quantity: item.quantity });
+    }
+
+    cartItems.length = 0;
+    currentPage = 0;
+    currentView = 'orders';
+    renderView();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Checkout failed.';
+    const checkoutMessage = document.getElementById('checkout-message');
+    if (checkoutMessage) {
+      checkoutMessage.textContent = message;
+      checkoutMessage.className = 'error-state';
+    }
+    if (checkoutButton) {
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Checkout';
+    }
+  }
 }
 
 async function handleAuthSubmit(event: SubmitEvent) {
@@ -354,8 +418,10 @@ function renderCartPage() {
     <div class="page-container">
       <header class="topbar">
         <h1>Cart</h1>
-        <button class="primary-btn" type="button">Checkout</button>
+        <button id="checkout-btn" class="primary-btn" type="button" ${cartItems.length === 0 ? 'disabled' : ''}>Checkout</button>
       </header>
+
+      <div id="checkout-message" class="empty-state"></div>
 
       ${cartItems.length === 0
         ? '<div class="empty-cart">Your cart is empty. Add products to continue.</div>'
@@ -521,6 +587,7 @@ function renderView() {
 
   if (currentView === 'cart') {
     pageRoot.innerHTML = renderCartPage();
+    document.getElementById('checkout-btn')?.addEventListener('click', () => void handleCheckout());
     return;
   }
 
