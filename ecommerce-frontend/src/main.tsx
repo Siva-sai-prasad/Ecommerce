@@ -182,6 +182,7 @@ async function handleAuthSubmit(event: SubmitEvent) {
       throw new Error('No token returned from the server');
     }
 
+    saveUserSession(token, email);
     const profile = await fetchCurrentUser();
     saveUserSession(token, profile.name ?? email);
     authMessage = '';
