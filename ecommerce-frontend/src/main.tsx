@@ -44,6 +44,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const AUTH_BASE_URL = 'http://localhost:8080';
 const AUTH_TOKEN_KEY = 'ecommerce.jwt';
 const USER_NAME_KEY = 'ecommerce.userName';
+const USER_ROLE_KEY = 'ecommerce.userRole';
 
 let catalog: Product[] = [
   {
@@ -98,18 +99,28 @@ function getStoredUserName() {
   return localStorage.getItem(USER_NAME_KEY) ?? 'Customer';
 }
 
-function saveUserSession(token: string, name: string) {
+function getStoredUserRole() {
+  return localStorage.getItem(USER_ROLE_KEY) ?? 'USER';
+}
+
+function saveUserSession(token: string, name: string, role = 'USER') {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(USER_NAME_KEY, name);
+  localStorage.setItem(USER_ROLE_KEY, role);
 }
 
 function clearUserSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(USER_NAME_KEY);
+  localStorage.removeItem(USER_ROLE_KEY);
 }
 
 function isLoggedIn() {
   return Boolean(getStoredToken());
+}
+
+function isAdmin() {
+  return getStoredUserRole() === 'ADMIN';
 }
 
 async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersPage> {
@@ -287,7 +298,7 @@ async function handleAuthSubmit(event: SubmitEvent) {
 
     saveUserSession(token, email);
     const profile = await fetchCurrentUser();
-    saveUserSession(token, profile.name ?? email);
+    saveUserSession(token, profile.name ?? email, profile.role ?? 'USER');
     authMessage = '';
     currentView = 'products';
     renderView();
@@ -323,7 +334,7 @@ function renderShell() {
         <nav class="nav">
           <a href="#" data-view="dashboard">Dashboard</a>
           <a href="#" data-view="products">Products</a>
-          <a href="#" data-view="admin-products">Manage products</a>
+          ${isAdmin() ? '<a href="#" data-view="admin-products">Manage products</a>' : ''}
           <a href="#" data-view="orders">Orders</a>
           <a href="#" data-view="cart">Cart <span id="cart-badge" class="cart-badge" hidden>0</span></a>
           <a href="#" data-view="login">${isLoggedIn() ? getStoredUserName() : 'Login'}</a>
@@ -671,6 +682,10 @@ function renderView() {
   }
 
   if (currentView === 'admin-products') {
+    if (!isAdmin()) {
+      pageRoot.innerHTML = '<div class="error-state">Admin access is required to manage products.</div>';
+      return;
+    }
     pageRoot.innerHTML = renderAdminProducts();
     const form = document.getElementById('product-form') as HTMLFormElement | null;
     form?.addEventListener('submit', async (event) => {
