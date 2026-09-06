@@ -199,6 +199,16 @@ button, input, select, a {
   gap: 8px;
 }
 
+.dashboard-hover-card {
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-hover-card:hover {
+  background: var(--sky-200);
+  border-color: var(--sky-400, #38bdf8);
+  transform: translateY(-2px);
+}
+
 .accent-card {
   background: linear-gradient(135deg, var(--sky-500) 0%, var(--sky-600) 100%);
   color: var(--white);
@@ -300,6 +310,34 @@ button, input, select, a {
 
 .admin-order-row {
   grid-template-columns: 0.7fr 1.8fr 0.8fr 1.2fr;
+}
+
+.admin-product-row {
+  grid-template-columns: 1.8fr 1fr 0.8fr 0.7fr 0.8fr;
+}
+
+.admin-products-panel {
+  margin-top: 24px;
+}
+
+.delete-product-btn {
+  width: fit-content;
+  border: 1px solid #fecdd3;
+  border-radius: 10px;
+  padding: 7px 10px;
+  background: #fff1f2;
+  color: #be123c;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.delete-product-btn:hover:not(:disabled) {
+  background: #ffe4e6;
+}
+
+.delete-product-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .status-select {

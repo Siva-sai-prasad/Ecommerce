@@ -3,6 +3,7 @@ package com.ecommerce.service;
 import com.ecommerce.dto.ProductRequest;
 import com.ecommerce.dto.ProductResponse;
 import com.ecommerce.model.Product;
+import com.ecommerce.repository.OrderItemRepository;
 import com.ecommerce.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +12,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProductServiceTest {
@@ -85,5 +88,34 @@ class ProductServiceTest {
         assertEquals("Headphones", response.getName());
         assertEquals(12, response.getStock());
         assertEquals("https://example.com/headphones.jpg", response.getImageUrl());
+    }
+
+    @Test
+    void deleteProduct_deletesProductWithNoOrderItems() {
+        ProductRepository productRepository = mock(ProductRepository.class);
+        OrderItemRepository orderItemRepository = mock(OrderItemRepository.class);
+        Product product = new Product();
+        product.setId(3L);
+
+        when(productRepository.findById(3L)).thenReturn(Optional.of(product));
+        when(orderItemRepository.existsByProduct_Id(3L)).thenReturn(false);
+
+        new ProductService(productRepository, orderItemRepository).deleteProduct(3L);
+
+        verify(productRepository).delete(product);
+    }
+
+    @Test
+    void deleteProduct_rejectsProductIncludedInAnOrder() {
+        ProductRepository productRepository = mock(ProductRepository.class);
+        OrderItemRepository orderItemRepository = mock(OrderItemRepository.class);
+        Product product = new Product();
+        product.setId(3L);
+
+        when(productRepository.findById(3L)).thenReturn(Optional.of(product));
+        when(orderItemRepository.existsByProduct_Id(3L)).thenReturn(true);
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> new ProductService(productRepository, orderItemRepository).deleteProduct(3L));
     }
 }

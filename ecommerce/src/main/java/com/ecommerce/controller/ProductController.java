@@ -33,4 +33,10 @@ public class ProductController {
     public ProductResponse createProduct(@RequestBody ProductRequest request) {
         return productService.createProduct(request);
     }
+
+    @DeleteMapping("/admin/products/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+    }
 }

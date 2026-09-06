@@ -35,6 +35,7 @@ type Product = {
   id: number;
   name: string;
   price: number;
+  stock: number;
   tag: string;
   description: string;
   imageUrl: string;
@@ -52,6 +53,7 @@ let catalog: Product[] = [
     id: 1,
     name: 'Laptop',
     price: 999.0,
+    stock: 25,
     tag: 'Featured',
     description: 'Lightweight business laptop for daily productivity.',
     imageUrl: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80',
@@ -60,6 +62,7 @@ let catalog: Product[] = [
     id: 2,
     name: 'Headphones',
     price: 89.99,
+    stock: 40,
     tag: 'Popular',
     description: 'Noise-cancelling headphones with a warm bass profile.',
     imageUrl: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80',
@@ -68,6 +71,7 @@ let catalog: Product[] = [
     id: 3,
     name: 'Phone',
     price: 599.0,
+    stock: 30,
     tag: 'New',
     description: 'Premium smartphone with crisp camera performance.',
     imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80',
@@ -76,6 +80,7 @@ let catalog: Product[] = [
     id: 4,
     name: 'Smart Watch',
     price: 179.0,
+    stock: 35,
     tag: 'Trending',
     description: 'Fitness-focused smartwatch with health tracking.',
     imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80',
@@ -92,6 +97,7 @@ let currentView = 'products';
 let authMode: 'login' | 'signup' = 'login';
 let authMessage = '';
 let selectedCategory = 'All';
+let ordersRefreshTimer: number | undefined;
 
 function getStoredToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY) ?? '';
@@ -187,7 +193,7 @@ async function fetchAdminDashboard() {
   }>;
 }
 
-async function updateOrderStatus(orderId: number, status: string) {
+async function updateOrderStatus(orderId: number, status: string): Promise<Order> {
   const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
     method: 'PATCH',
     headers: {
@@ -201,6 +207,8 @@ async function updateOrderStatus(orderId: number, status: string) {
     const payload = await response.json().catch(() => ({}));
     throw new Error(payload.message ?? `Status update failed: ${response.status}`);
   }
+
+  return response.json() as Promise<Order>;
 }
 
 async function fetchProducts(): Promise<Product[]> {
@@ -242,6 +250,20 @@ async function createProduct(form: HTMLFormElement) {
   }
 
   return response.json() as Promise<Product>;
+}
+
+async function deleteProduct(productId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${getStoredToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message ?? `Product deletion failed: ${response.status}`);
+  }
 }
 
 async function fetchCurrentUser() {
@@ -475,12 +497,12 @@ function renderDashboard() {
           <strong id="dashboard-revenue">Loading...</strong>
           <small>All completed and pending orders</small>
         </div>
-        <div class="summary-card">
+        <div class="summary-card dashboard-hover-card">
           <span>Orders</span>
           <strong id="dashboard-orders">Loading...</strong>
           <small><span id="dashboard-pending">0</span> pending</small>
         </div>
-        <div class="summary-card">
+        <div class="summary-card dashboard-hover-card">
           <span>Customers</span>
           <strong id="dashboard-customers">Loading...</strong>
           <small>Registered customers</small>
@@ -553,7 +575,7 @@ function renderProducts() {
 
 function renderAdminProducts() {
   return `
-    <div class="page-container form-container">
+    <div class="page-container">
       <div class="auth-card product-form-card">
         <p class="auth-kicker">Catalog management</p>
         <h1>Add a product</h1>
@@ -593,8 +615,71 @@ function renderAdminProducts() {
           <button type="submit" class="primary-btn">Save product</button>
         </form>
       </div>
+      <section class="orders-panel admin-products-panel">
+        <div class="panel-header">
+          <h2>Manage products</h2>
+        </div>
+        <div id="admin-products-container" class="orders-table">
+          <div class="empty-state">Loading products...</div>
+        </div>
+      </section>
     </div>
   `;
+}
+
+async function loadAdminProducts() {
+  const container = document.getElementById('admin-products-container');
+  if (!container) return;
+
+  try {
+    const products = await fetchProducts();
+    catalog = products;
+    container.innerHTML = `
+      <div class="table-head table-row admin-product-row">
+        <span>Product</span>
+        <span>Category</span>
+        <span>Price</span>
+        <span>Stock</span>
+        <span>Action</span>
+      </div>
+      ${products.map((product) => `
+        <div class="table-row admin-product-row">
+          <span>${product.name}</span>
+          <span>${product.category ?? 'Electronics'}</span>
+          <span>$${product.price.toFixed(2)}</span>
+          <span>${product.stock}</span>
+          <button class="delete-product-btn" type="button" data-product-id="${product.id}">Delete</button>
+        </div>
+      `).join('') || '<div class="empty-state">No products found.</div>'}
+    `;
+
+    container.querySelectorAll('.delete-product-btn').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const productId = Number((button as HTMLElement).dataset.productId);
+        if (!window.confirm('Delete this product? This cannot be undone.')) return;
+
+        const message = document.getElementById('product-form-message');
+        (button as HTMLButtonElement).disabled = true;
+        try {
+          await deleteProduct(productId);
+          catalog = catalog.filter((product) => product.id !== productId);
+          await loadAdminProducts();
+          if (message) {
+            message.textContent = 'Product deleted.';
+            message.className = 'success-state';
+          }
+        } catch (error) {
+          if (message) {
+            message.textContent = error instanceof Error ? error.message : 'Product deletion failed.';
+            message.className = 'error-state';
+          }
+          (button as HTMLButtonElement).disabled = false;
+        }
+      });
+    });
+  } catch (error) {
+    container.innerHTML = `<div class="error-state">${error instanceof Error ? error.message : 'Failed to load products.'}</div>`;
+  }
 }
 
 function renderAdminOrders() {
@@ -643,7 +728,7 @@ async function loadAdminOrders(search = '', status = '') {
           <span>#${order.orderId}</span>
           <span>${order.userEmail}</span>
           <span>$${Number(order.total || 0).toFixed(2)}</span>
-          <select class="status-select" data-order-id="${order.orderId}">
+          <select class="status-select" data-order-id="${order.orderId}" data-current-status="${order.status}">
             ${['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
               .map((status) => `<option value="${status}" ${status === order.status ? 'selected' : ''}>${status}</option>`)
               .join('')}
@@ -655,10 +740,15 @@ async function loadAdminOrders(search = '', status = '') {
     container.querySelectorAll('.status-select').forEach((select) => {
       select.addEventListener('change', async (event) => {
         const target = event.currentTarget as HTMLSelectElement;
+        const previousStatus = target.dataset.currentStatus ?? target.value;
         target.disabled = true;
         try {
-          await updateOrderStatus(Number(target.dataset.orderId), target.value);
+          const updatedOrder = await updateOrderStatus(Number(target.dataset.orderId), target.value);
+          target.value = updatedOrder.status;
+          target.dataset.currentStatus = updatedOrder.status;
+          target.classList.remove('status-error');
         } catch (error) {
+          target.value = previousStatus;
           target.classList.add('status-error');
         } finally {
           target.disabled = false;
@@ -854,6 +944,8 @@ function renderView() {
   const pageRoot = document.getElementById('page-root');
   if (!pageRoot) return;
 
+  stopOrdersAutoRefresh();
+
   document.querySelectorAll('[data-view]').forEach((link) => {
     const current = link as HTMLElement;
     current.classList.toggle('active', current.dataset.view === currentView);
@@ -877,6 +969,7 @@ function renderView() {
       return;
     }
     pageRoot.innerHTML = renderAdminProducts();
+    void loadAdminProducts();
     const form = document.getElementById('product-form') as HTMLFormElement | null;
     form?.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -885,6 +978,7 @@ function renderView() {
       try {
         await createProduct(form);
         catalog = await fetchProducts();
+        await loadAdminProducts();
         form.reset();
         if (message) {
           message.textContent = 'Product saved. It is now available in the storefront.';
@@ -934,6 +1028,22 @@ function renderView() {
   pageRoot.innerHTML = renderOrdersPage();
   bindOrderControls();
   void loadOrders();
+  startOrdersAutoRefresh();
+}
+
+function startOrdersAutoRefresh() {
+  ordersRefreshTimer = window.setInterval(() => {
+    if (currentView === 'orders' && document.visibilityState === 'visible') {
+      void loadOrders();
+    }
+  }, 10_000);
+}
+
+function stopOrdersAutoRefresh() {
+  if (ordersRefreshTimer !== undefined) {
+    window.clearInterval(ordersRefreshTimer);
+    ordersRefreshTimer = undefined;
+  }
 }
 
 function bindOrderControls() {

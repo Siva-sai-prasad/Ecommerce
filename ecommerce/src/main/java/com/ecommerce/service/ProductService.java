@@ -3,8 +3,12 @@ package com.ecommerce.service;
 import com.ecommerce.dto.ProductRequest;
 import com.ecommerce.dto.ProductResponse;
 import com.ecommerce.model.Product;
+import com.ecommerce.repository.OrderItemRepository;
 import com.ecommerce.repository.ProductRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,9 +17,16 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public ProductService(ProductRepository productRepository) {
+        this(productRepository, null);
+    }
+
+    @Autowired
+    public ProductService(ProductRepository productRepository, OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public List<ProductResponse> getAllProducts() {
@@ -41,6 +52,20 @@ public class ProductService {
 
         Product saved = productRepository.save(product);
         return mapToResponse(saved);
+    }
+
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        if (orderItemRepository != null && orderItemRepository.existsByProduct_Id(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Products included in an order cannot be deleted"
+            );
+        }
+
+        productRepository.delete(product);
     }
 
     private ProductResponse mapToResponse(Product product) {
