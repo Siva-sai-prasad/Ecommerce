@@ -137,6 +137,14 @@ button, input, select, a {
   color: var(--slate-900);
 }
 
+.category-filter {
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: var(--white);
+  color: var(--slate-900);
+}
+
 .primary-btn,
 .secondary-btn,
 .page-btn {
@@ -377,6 +385,14 @@ button, input, select, a {
   border-radius: 999px;
   background: var(--sky-100);
   color: var(--sky-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.product-category {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--slate-500);
   font-size: 0.75rem;
   font-weight: 700;
 }

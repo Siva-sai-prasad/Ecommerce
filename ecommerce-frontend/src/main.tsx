@@ -38,6 +38,7 @@ type Product = {
   tag: string;
   description: string;
   imageUrl: string;
+  category?: string | null;
 };
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -90,6 +91,7 @@ let sortDirection = 'desc';
 let currentView = 'products';
 let authMode: 'login' | 'signup' = 'login';
 let authMessage = '';
+let selectedCategory = 'All';
 
 function getStoredToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY) ?? '';
@@ -200,6 +202,7 @@ async function fetchProducts(): Promise<Product[]> {
   return products.map((product: Omit<Product, 'tag'>, index: number) => ({
     ...product,
     tag: ['Featured', 'Popular', 'New', 'Trending'][index % 4],
+    category: product.category ?? 'Electronics',
   }));
 }
 
@@ -218,6 +221,7 @@ async function createProduct(form: HTMLFormElement) {
       price: Number(formData.get('price')),
       stock: Number(formData.get('stock')),
       imageUrl: String(formData.get('imageUrl') ?? '').trim(),
+      category: String(formData.get('category') ?? 'Electronics'),
     }),
   });
 
@@ -495,19 +499,29 @@ async function loadAdminDashboard() {
 }
 
 function renderProducts() {
+  const visibleProducts = selectedCategory === 'All'
+    ? catalog
+    : catalog.filter((product) => (product.category ?? 'Electronics') === selectedCategory);
+
   return `
     <div class="page-container">
       <header class="topbar">
         <h1>Products</h1>
-        <button class="primary-btn" type="button">New arrival</button>
+        <select id="product-category-filter" class="category-filter">
+          <option value="All" ${selectedCategory === 'All' ? 'selected' : ''}>All categories</option>
+          <option value="Groceries" ${selectedCategory === 'Groceries' ? 'selected' : ''}>Groceries</option>
+          <option value="Electronics" ${selectedCategory === 'Electronics' ? 'selected' : ''}>Electronics</option>
+          <option value="Fresh Veggies" ${selectedCategory === 'Fresh Veggies' ? 'selected' : ''}>Fresh Veggies</option>
+        </select>
       </header>
 
       <div class="product-grid">
-        ${catalog
+        ${visibleProducts
           .map(
             (product) => `
               <div class="product-card">
                 <span class="product-tag">${product.tag}</span>
+                <span class="product-category">${product.category ?? 'Electronics'}</span>
                 <img class="product-image" src="${product.imageUrl}" alt="${product.name}" />
                 <h3>${product.name}</h3>
                 <p class="product-description">${product.description}</p>
@@ -519,6 +533,7 @@ function renderProducts() {
             `,
           )
           .join('')}
+        ${visibleProducts.length === 0 ? '<div class="empty-state">No products in this category.</div>' : ''}
       </div>
     </div>
   `;
@@ -540,6 +555,14 @@ function renderAdminProducts() {
           <label>
             Description
             <textarea name="description" rows="3" placeholder="Short product description" required></textarea>
+          </label>
+          <label>
+            Category
+            <select name="category" required>
+              <option value="Groceries">Groceries</option>
+              <option value="Electronics" selected>Electronics</option>
+              <option value="Fresh Veggies">Fresh Veggies</option>
+            </select>
           </label>
           <div class="form-row">
             <label>
@@ -658,6 +681,11 @@ async function loadProductsForView(pageRoot: HTMLElement) {
     catalog = await fetchProducts();
     pageRoot.innerHTML = renderProducts();
     bindProductButtons();
+    document.getElementById('product-category-filter')?.addEventListener('change', (event) => {
+      selectedCategory = (event.target as HTMLSelectElement).value;
+      pageRoot.innerHTML = renderProducts();
+      bindProductButtons();
+    });
   } catch (error) {
     pageRoot.innerHTML = `<div class="error-state">${error instanceof Error ? error.message : 'Failed to load products.'}</div>`;
   }

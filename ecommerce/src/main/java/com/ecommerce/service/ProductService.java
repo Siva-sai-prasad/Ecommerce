@@ -37,6 +37,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());
+        product.setCategory(request.getCategory());
 
         Product saved = productRepository.save(product);
         return mapToResponse(saved);
@@ -49,7 +50,8 @@ public class ProductService {
                 product.getDescription(),
                 product.getPrice(),
                 product.getStock(),
-                product.getImageUrl()
+                product.getImageUrl(),
+                product.getCategory()
         );
     }
 }
