@@ -12,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 	List<Order> findByUser_Email(String email);
+	long countByStatus(String status);
+
+	@Query("select coalesce(sum(o.total), 0) from Order o")
+	double sumOrderTotals();
 
 	Page<Order> findByUser_Email(String email, Pageable pageable);
 

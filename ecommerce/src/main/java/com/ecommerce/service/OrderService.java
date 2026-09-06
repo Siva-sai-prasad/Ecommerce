@@ -1,6 +1,7 @@
 package com.ecommerce.service;
 
 import com.ecommerce.dto.CreateOrderRequest;
+import com.ecommerce.dto.AdminDashboardResponse;
 import com.ecommerce.dto.OrderResponse;
 import com.ecommerce.dto.OrderItemResponse;
 import java.util.List;
@@ -167,6 +168,15 @@ public class OrderService {
         }
         return orderRepository.findAllForAdmin(normalizedSearch, normalizedStatus, pageable)
                 .map(this::mapToResponse);
+    }
+
+    public AdminDashboardResponse getAdminDashboard() {
+        return new AdminDashboardResponse(
+                orderRepository.count(),
+                orderRepository.countByStatus("PENDING"),
+                userRepository.count(),
+                orderRepository.sumOrderTotals()
+        );
     }
 
     @Transactional

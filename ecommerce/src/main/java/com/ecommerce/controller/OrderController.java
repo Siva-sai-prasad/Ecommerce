@@ -45,6 +45,11 @@ public class OrderController {
         return orderService.getAllOrders(pageable, search, status);
     }
 
+    @org.springframework.web.bind.annotation.GetMapping("/admin/dashboard")
+    public com.ecommerce.dto.AdminDashboardResponse getAdminDashboard() {
+        return orderService.getAdminDashboard();
+    }
+
     @org.springframework.web.bind.annotation.PatchMapping("/admin/orders/{orderId}/status")
     public OrderResponse updateOrderStatus(
             @org.springframework.web.bind.annotation.PathVariable Long orderId,

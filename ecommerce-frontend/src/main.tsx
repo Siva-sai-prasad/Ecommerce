@@ -157,6 +157,23 @@ async function fetchAdminOrders(search = '', status = ''): Promise<OrdersPage> {
   return response.json();
 }
 
+async function fetchAdminDashboard() {
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard`, {
+    headers: { Authorization: `Bearer ${getStoredToken()}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load dashboard: ${response.status}`);
+  }
+
+  return response.json() as Promise<{
+    totalOrders: number;
+    pendingOrders: number;
+    totalCustomers: number;
+    revenue: number;
+  }>;
+}
+
 async function updateOrderStatus(orderId: number, status: string) {
   const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
     method: 'PATCH',
@@ -440,22 +457,41 @@ function renderDashboard() {
       <section class="summary-grid">
         <div class="summary-card accent-card">
           <span>Revenue</span>
-          <strong>$12,480</strong>
-          <small>+18.2% this month</small>
+          <strong id="dashboard-revenue">Loading...</strong>
+          <small>All completed and pending orders</small>
         </div>
         <div class="summary-card">
           <span>Orders</span>
-          <strong>128</strong>
-          <small>24 waiting for shipment</small>
+          <strong id="dashboard-orders">Loading...</strong>
+          <small><span id="dashboard-pending">0</span> pending</small>
         </div>
         <div class="summary-card">
           <span>Customers</span>
-          <strong>94</strong>
-          <small>12 new this week</small>
+          <strong id="dashboard-customers">Loading...</strong>
+          <small>Registered customers</small>
         </div>
       </section>
     </div>
   `;
+}
+
+async function loadAdminDashboard() {
+  try {
+    const dashboard = await fetchAdminDashboard();
+    const revenue = document.getElementById('dashboard-revenue');
+    const orders = document.getElementById('dashboard-orders');
+    const pending = document.getElementById('dashboard-pending');
+    const customers = document.getElementById('dashboard-customers');
+    if (revenue) revenue.textContent = `$${dashboard.revenue.toFixed(2)}`;
+    if (orders) orders.textContent = String(dashboard.totalOrders);
+    if (pending) pending.textContent = String(dashboard.pendingOrders);
+    if (customers) customers.textContent = String(dashboard.totalCustomers);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load dashboard.';
+    document.querySelectorAll('#dashboard-revenue, #dashboard-orders, #dashboard-customers').forEach((element) => {
+      element.textContent = message;
+    });
+  }
 }
 
 function renderProducts() {
@@ -786,6 +822,7 @@ function renderView() {
 
   if (currentView === 'dashboard') {
     pageRoot.innerHTML = renderDashboard();
+    void loadAdminDashboard();
     return;
   }
 
