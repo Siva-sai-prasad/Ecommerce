@@ -141,6 +141,35 @@ async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersP
   return response.json();
 }
 
+async function fetchAdminOrders(): Promise<OrdersPage> {
+  const token = getStoredToken();
+  const response = await fetch(`${API_BASE_URL}/admin/orders?page=0&size=50&sort=createdAt,desc`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load admin orders: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function updateOrderStatus(orderId: number, status: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getStoredToken()}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message ?? `Status update failed: ${response.status}`);
+  }
+}
+
 async function fetchProducts(): Promise<Product[]> {
   const response = await fetch(`${API_BASE_URL}/products`);
   if (!response.ok) {
@@ -335,6 +364,7 @@ function renderShell() {
           ${isAdmin() ? '<a href="#" data-view="dashboard">Admin dashboard</a>' : ''}
           <a href="#" data-view="products">Products</a>
           ${isAdmin() ? '<a href="#" data-view="admin-products">Manage products</a>' : ''}
+          ${isAdmin() ? '<a href="#" data-view="admin-orders">Manage orders</a>' : ''}
           <a href="#" data-view="orders">Orders</a>
           <a href="#" data-view="cart">Cart <span id="cart-badge" class="cart-badge" hidden>0</span></a>
           <a href="#" data-view="login">${isLoggedIn() ? getStoredUserName() : 'Login'}</a>
@@ -492,6 +522,67 @@ function renderAdminProducts() {
       </div>
     </div>
   `;
+}
+
+function renderAdminOrders() {
+  return `
+    <div class="page-container">
+      <header class="topbar">
+        <h1>Manage orders</h1>
+        <span class="chip">Admin only</span>
+      </header>
+      <section class="orders-panel">
+        <div id="admin-orders-container" class="orders-table">
+          <div class="empty-state">Loading customer orders...</div>
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+async function loadAdminOrders() {
+  const container = document.getElementById('admin-orders-container');
+  if (!container) return;
+
+  try {
+    const page = await fetchAdminOrders();
+    container.innerHTML = `
+      <div class="table-head table-row admin-order-row">
+        <span>Order</span>
+        <span>Customer</span>
+        <span>Total</span>
+        <span>Status</span>
+      </div>
+      ${page.content.map((order) => `
+        <div class="table-row admin-order-row">
+          <span>#${order.orderId}</span>
+          <span>${order.userEmail}</span>
+          <span>$${Number(order.total || 0).toFixed(2)}</span>
+          <select class="status-select" data-order-id="${order.orderId}">
+            ${['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+              .map((status) => `<option value="${status}" ${status === order.status ? 'selected' : ''}>${status}</option>`)
+              .join('')}
+          </select>
+        </div>
+      `).join('') || '<div class="empty-state">No customer orders found.</div>'}
+    `;
+
+    container.querySelectorAll('.status-select').forEach((select) => {
+      select.addEventListener('change', async (event) => {
+        const target = event.currentTarget as HTMLSelectElement;
+        target.disabled = true;
+        try {
+          await updateOrderStatus(Number(target.dataset.orderId), target.value);
+        } catch (error) {
+          target.classList.add('status-error');
+        } finally {
+          target.disabled = false;
+        }
+      });
+    });
+  } catch (error) {
+    container.innerHTML = `<div class="error-state">${error instanceof Error ? error.message : 'Failed to load admin orders.'}</div>`;
+  }
 }
 
 function bindProductButtons() {
@@ -707,6 +798,16 @@ function renderView() {
         }
       }
     });
+    return;
+  }
+
+  if (currentView === 'admin-orders') {
+    if (!isAdmin()) {
+      pageRoot.innerHTML = '<div class="error-state">Admin access is required to manage orders.</div>';
+      return;
+    }
+    pageRoot.innerHTML = renderAdminOrders();
+    void loadAdminOrders();
     return;
   }
 

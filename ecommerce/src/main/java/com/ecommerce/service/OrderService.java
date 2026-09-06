@@ -20,6 +20,10 @@ import java.sql.Timestamp;
 @Service
 public class OrderService {
 
+    private static final java.util.Set<String> ORDER_STATUSES = java.util.Set.of(
+            "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"
+    );
+
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
@@ -147,20 +151,39 @@ public class OrderService {
 
     public org.springframework.data.domain.Page<OrderResponse> getOrdersForUser(String email, org.springframework.data.domain.Pageable pageable) {
         org.springframework.data.domain.Page<Order> orders = orderRepository.findByUser_Email(email, pageable);
-        return orders.map(o -> {
-            java.util.List<com.ecommerce.dto.OrderItemResponse> items = new java.util.ArrayList<>();
-            if (o.getItems() != null) {
-                for (OrderItem oi : o.getItems()) {
-                    Product p = oi.getProduct();
-                    items.add(new com.ecommerce.dto.OrderItemResponse(
-                            p != null ? p.getId() : null,
-                            p != null ? p.getName() : null,
-                            oi.getQuantity(),
-                            oi.getPrice()
-                    ));
-                }
+        return orders.map(this::mapToResponse);
+    }
+
+    public org.springframework.data.domain.Page<OrderResponse> getAllOrders(org.springframework.data.domain.Pageable pageable) {
+        return orderRepository.findAll(pageable).map(this::mapToResponse);
+    }
+
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, String status) {
+        String normalizedStatus = status == null ? "" : status.trim().toUpperCase();
+        if (!ORDER_STATUSES.contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Unsupported order status");
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        order.setStatus(normalizedStatus);
+        return mapToResponse(orderRepository.save(order));
+    }
+
+    private OrderResponse mapToResponse(Order order) {
+        java.util.List<com.ecommerce.dto.OrderItemResponse> items = new java.util.ArrayList<>();
+        if (order.getItems() != null) {
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                items.add(new com.ecommerce.dto.OrderItemResponse(
+                        product != null ? product.getId() : null,
+                        product != null ? product.getName() : null,
+                        item.getQuantity(),
+                        item.getPrice()
+                ));
             }
-            return new OrderResponse(o.getId(), o.getUser().getEmail(), o.getStatus(), o.getTotal(), items);
-        });
+        }
+        return new OrderResponse(order.getId(), order.getUser().getEmail(), order.getStatus(), order.getTotal(), items);
     }
 }

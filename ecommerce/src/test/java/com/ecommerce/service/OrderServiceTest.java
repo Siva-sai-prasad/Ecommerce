@@ -18,8 +18,39 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 class OrderServiceTest {
+
+    @Test
+    void updateOrderStatus_updatesValidStatus() {
+        OrderRepository orderRepository = mock(OrderRepository.class);
+        Order order = new Order();
+        order.setId(100L);
+        order.setStatus("PENDING");
+        User user = new User();
+        user.setEmail("jane@example.com");
+        order.setUser(user);
+        when(orderRepository.findById(100L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        OrderService service = new OrderService(null, null, orderRepository);
+
+        OrderResponse response = service.updateOrderStatus(100L, "shipped");
+
+        assertEquals("SHIPPED", response.getStatus());
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void updateOrderStatus_rejectsUnsupportedStatus() {
+        OrderService service = new OrderService(null, null, mock(OrderRepository.class));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> service.updateOrderStatus(100L, "REFUNDED")
+        );
+    }
 
     @Test
     void createOrder_createsOrderAndReducesStock() {

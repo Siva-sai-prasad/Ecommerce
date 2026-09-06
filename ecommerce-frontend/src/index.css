@@ -270,6 +270,25 @@ button, input, select, a {
   font-weight: 700;
 }
 
+.admin-order-row {
+  grid-template-columns: 0.7fr 1.8fr 0.8fr 1.2fr;
+}
+
+.status-select {
+  width: fit-content;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 7px 9px;
+  background: var(--white);
+  color: var(--slate-900);
+  font-weight: 700;
+}
+
+.status-error {
+  border-color: #be123c;
+  color: #be123c;
+}
+
 .status-pill {
   display: inline-block;
   background: var(--sky-100);
