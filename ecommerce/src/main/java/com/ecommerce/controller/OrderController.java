@@ -39,8 +39,10 @@ public class OrderController {
 
     @org.springframework.web.bind.annotation.GetMapping("/admin/orders")
     public org.springframework.data.domain.Page<OrderResponse> listAllOrders(
-            org.springframework.data.domain.Pageable pageable) {
-        return orderService.getAllOrders(pageable);
+            org.springframework.data.domain.Pageable pageable,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String search,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String status) {
+        return orderService.getAllOrders(pageable, search, status);
     }
 
     @org.springframework.web.bind.annotation.PatchMapping("/admin/orders/{orderId}/status")

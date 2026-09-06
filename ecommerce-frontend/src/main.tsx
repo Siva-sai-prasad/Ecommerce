@@ -141,9 +141,12 @@ async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersP
   return response.json();
 }
 
-async function fetchAdminOrders(): Promise<OrdersPage> {
+async function fetchAdminOrders(search = '', status = ''): Promise<OrdersPage> {
   const token = getStoredToken();
-  const response = await fetch(`${API_BASE_URL}/admin/orders?page=0&size=50&sort=createdAt,desc`, {
+  const params = new URLSearchParams({ page: '0', size: '50', sort: 'createdAt,desc' });
+  if (search.trim()) params.set('search', search.trim());
+  if (status) params.set('status', status);
+  const response = await fetch(`${API_BASE_URL}/admin/orders?${params.toString()}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -532,6 +535,18 @@ function renderAdminOrders() {
         <span class="chip">Admin only</span>
       </header>
       <section class="orders-panel">
+        <div class="admin-order-filters">
+          <input id="admin-order-search" type="search" placeholder="Search customer email" />
+          <select id="admin-order-status">
+            <option value="">All statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <button id="admin-order-filter-btn" class="secondary-btn" type="button">Filter</button>
+        </div>
         <div id="admin-orders-container" class="orders-table">
           <div class="empty-state">Loading customer orders...</div>
         </div>
@@ -540,12 +555,12 @@ function renderAdminOrders() {
   `;
 }
 
-async function loadAdminOrders() {
+async function loadAdminOrders(search = '', status = '') {
   const container = document.getElementById('admin-orders-container');
   if (!container) return;
 
   try {
-    const page = await fetchAdminOrders();
+    const page = await fetchAdminOrders(search, status);
     container.innerHTML = `
       <div class="table-head table-row admin-order-row">
         <span>Order</span>
@@ -583,6 +598,14 @@ async function loadAdminOrders() {
   } catch (error) {
     container.innerHTML = `<div class="error-state">${error instanceof Error ? error.message : 'Failed to load admin orders.'}</div>`;
   }
+}
+
+function bindAdminOrderFilters() {
+  document.getElementById('admin-order-filter-btn')?.addEventListener('click', () => {
+    const search = (document.getElementById('admin-order-search') as HTMLInputElement).value;
+    const status = (document.getElementById('admin-order-status') as HTMLSelectElement).value;
+    void loadAdminOrders(search, status);
+  });
 }
 
 function bindProductButtons() {
@@ -807,6 +830,7 @@ function renderView() {
       return;
     }
     pageRoot.innerHTML = renderAdminOrders();
+    bindAdminOrderFilters();
     void loadAdminOrders();
     return;
   }

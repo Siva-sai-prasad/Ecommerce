@@ -155,7 +155,18 @@ public class OrderService {
     }
 
     public org.springframework.data.domain.Page<OrderResponse> getAllOrders(org.springframework.data.domain.Pageable pageable) {
-        return orderRepository.findAll(pageable).map(this::mapToResponse);
+        return getAllOrders(pageable, null, null);
+    }
+
+    public org.springframework.data.domain.Page<OrderResponse> getAllOrders(
+            org.springframework.data.domain.Pageable pageable, String search, String status) {
+        String normalizedSearch = search == null || search.isBlank() ? null : search.trim();
+        String normalizedStatus = status == null || status.isBlank() ? null : status.trim().toUpperCase();
+        if (normalizedStatus != null && !ORDER_STATUSES.contains(normalizedStatus)) {
+            throw new IllegalArgumentException("Unsupported order status");
+        }
+        return orderRepository.findAllForAdmin(normalizedSearch, normalizedStatus, pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional

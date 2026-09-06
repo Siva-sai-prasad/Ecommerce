@@ -215,6 +215,26 @@ button, input, select, a {
   padding: 20px;
 }
 
+.admin-order-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-order-filters input,
+.admin-order-filters select {
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: var(--white);
+  color: var(--slate-900);
+}
+
+.admin-order-filters input {
+  flex: 1;
+  min-width: 180px;
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
