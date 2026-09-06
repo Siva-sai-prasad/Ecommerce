@@ -37,7 +37,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStock(request.getStock());
         product.setImageUrl(request.getImageUrl());
-        product.setCategory(request.getCategory());
+        product.setCategory(normalizeCategory(request.getCategory()));
 
         Product saved = productRepository.save(product);
         return mapToResponse(saved);
@@ -53,5 +53,16 @@ public class ProductService {
                 product.getImageUrl(),
                 product.getCategory()
         );
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return "Electronics";
+        }
+        String normalized = category.trim();
+        if (normalized.equalsIgnoreCase("groceries")) return "Groceries";
+        if (normalized.equalsIgnoreCase("fresh veggies")) return "Fresh Veggies";
+        if (normalized.equalsIgnoreCase("electronics")) return "Electronics";
+        throw new IllegalArgumentException("Unsupported product category");
     }
 }

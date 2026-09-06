@@ -18,29 +18,45 @@ public class DemoDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (productRepository.count() > 0) {
+        if (productRepository.count() == 0) {
+            productRepository.saveAll(List.of(
+                createProduct("Laptop", "Lightweight business laptop for daily productivity.", 999.0, 25,
+                    "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80", "Electronics"),
+                createProduct("Headphones", "Noise-cancelling headphones with a warm bass profile.", 89.99, 40,
+                    "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80", "Electronics"),
+                createProduct("Phone", "Premium smartphone with crisp camera performance.", 599.0, 30,
+                    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80", "Electronics"),
+                createProduct("Smart Watch", "Fitness-focused smartwatch with health tracking.", 179.0, 35,
+                    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80", "Electronics")
+            ));
             return;
         }
 
-        productRepository.saveAll(List.of(
-                createProduct("Laptop", "Lightweight business laptop for daily productivity.", 999.0, 25,
-                        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80"),
-                createProduct("Headphones", "Noise-cancelling headphones with a warm bass profile.", 89.99, 40,
-                        "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80"),
-                createProduct("Phone", "Premium smartphone with crisp camera performance.", 599.0, 30,
-                        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80"),
-                createProduct("Smart Watch", "Fitness-focused smartwatch with health tracking.", 179.0, 35,
-                        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80")
-        ));
+        List<Product> uncategorizedProducts = productRepository.findAll().stream()
+            .filter(product -> product.getCategory() == null
+                || product.getCategory().isBlank()
+                || isObviousVegetable(product))
+            .peek(product -> product.setCategory(isObviousVegetable(product) ? "Fresh Veggies" : "Electronics"))
+            .toList();
+        if (!uncategorizedProducts.isEmpty()) {
+            productRepository.saveAll(uncategorizedProducts);
+        }
     }
 
-    private Product createProduct(String name, String description, double price, int stock, String imageUrl) {
+        private Product createProduct(String name, String description, double price, int stock, String imageUrl, String category) {
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
         product.setPrice(price);
         product.setStock(stock);
         product.setImageUrl(imageUrl);
+        product.setCategory(category);
         return product;
+    }
+
+    private boolean isObviousVegetable(Product product) {
+        String name = product.getName() == null ? "" : product.getName().toLowerCase();
+        return name.contains("tomato") || name.contains("potato") || name.contains("onion")
+                || name.contains("carrot") || name.contains("vegetable") || name.contains("veggie");
     }
 }

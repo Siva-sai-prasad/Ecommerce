@@ -125,6 +125,17 @@ function isAdmin() {
   return getStoredUserRole() === 'ADMIN';
 }
 
+async function restoreSession() {
+  if (!getStoredToken()) return;
+
+  try {
+    const profile = await fetchCurrentUser();
+    saveUserSession(getStoredToken(), profile.name ?? getStoredUserName(), profile.role ?? getStoredUserRole());
+  } catch {
+    clearUserSession();
+  }
+}
+
 async function fetchOrders(page = currentPage, size = pageSize): Promise<OrdersPage> {
   const url = `${API_BASE_URL}/orders?page=${page}&size=${size}&sort=${sortField},${sortDirection}`;
   const token = getStoredToken();
@@ -1023,5 +1034,7 @@ async function loadOrders() {
   }
 }
 
-renderShell();
-renderView();
+void restoreSession().finally(() => {
+  renderShell();
+  renderView();
+});
