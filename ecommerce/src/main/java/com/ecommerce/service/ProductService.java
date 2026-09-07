@@ -88,6 +88,9 @@ public class ProductService {
         if (normalized.equalsIgnoreCase("groceries")) return "Groceries";
         if (normalized.equalsIgnoreCase("fresh veggies")) return "Fresh Veggies";
         if (normalized.equalsIgnoreCase("electronics")) return "Electronics";
+        if (normalized.equalsIgnoreCase("non veg")
+                || normalized.equalsIgnoreCase("non-veg")
+                || normalized.equalsIgnoreCase("nonveg")) return "Non Veg";
         throw new IllegalArgumentException("Unsupported product category");
     }
 }

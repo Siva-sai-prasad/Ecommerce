@@ -1,4 +1,5 @@
 import './index.css';
+import logo from './assets/logo.png';
 
 const app = document.getElementById('app');
 
@@ -411,9 +412,9 @@ function renderShell() {
     <div class="app-shell">
       <aside class="sidebar">
         <div class="brand-wrap">
-          <div class="brand-logo">S</div>
+          <img class="brand-logo" src="${logo}" alt="UniKart logo" />
           <div class="brand-copy">
-            <span class="brand-name">ShopFlow</span>
+            <span class="brand-name">UniKart</span>
             <small>Commerce</small>
           </div>
         </div>
@@ -485,7 +486,7 @@ function renderDashboard() {
       <section class="feature-banner">
         <div>
           <span class="chip">Live overview</span>
-          <h2>Skyline commerce is growing fast.</h2>
+          <h2>UniKart is growing fast.</h2>
           <p>Track performance, customer orders, and sales across your storefront.</p>
         </div>
         <button class="primary-btn" type="button">View report</button>
@@ -545,6 +546,7 @@ function renderProducts() {
           <option value="Groceries" ${selectedCategory === 'Groceries' ? 'selected' : ''}>Groceries</option>
           <option value="Electronics" ${selectedCategory === 'Electronics' ? 'selected' : ''}>Electronics</option>
           <option value="Fresh Veggies" ${selectedCategory === 'Fresh Veggies' ? 'selected' : ''}>Fresh Veggies</option>
+          <option value="Non Veg" ${selectedCategory === 'Non Veg' ? 'selected' : ''}>Non Veg</option>
         </select>
       </header>
 
@@ -595,6 +597,7 @@ function renderAdminProducts() {
               <option value="Groceries">Groceries</option>
               <option value="Electronics" selected>Electronics</option>
               <option value="Fresh Veggies">Fresh Veggies</option>
+              <option value="Non Veg">Non Veg</option>
             </select>
           </label>
           <div class="form-row">
