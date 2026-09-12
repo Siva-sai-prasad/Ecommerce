@@ -26,7 +26,8 @@ public class Product {
     @Column(name = "stock", nullable = false)
     private int stock;
 
-    @Column(name = "image_url")
+    @Lob
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @Column(length = 50)

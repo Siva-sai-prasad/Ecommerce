@@ -52,21 +52,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:4173",
-                "http://127.0.0.1:4173",
-                "http://192.168.0.121:4173",
-                "http://localhost:4174",
-                "http://127.0.0.1:4174",
-                "http://192.168.0.121:4174",
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://192.168.0.121:5173",
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-        ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -84,4 +73,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

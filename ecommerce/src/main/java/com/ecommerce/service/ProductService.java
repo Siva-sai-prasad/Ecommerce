@@ -54,6 +54,33 @@ public class ProductService {
         return mapToResponse(saved);
     }
 
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            product.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            product.setDescription(request.getDescription());
+        }
+        if (request.getPrice() > 0) {
+            product.setPrice(request.getPrice());
+        }
+        if (request.getStock() >= 0) {
+            product.setStock(request.getStock());
+        }
+        if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
+            product.setImageUrl(request.getImageUrl());
+        }
+        if (request.getCategory() != null && !request.getCategory().isBlank()) {
+            product.setCategory(normalizeCategory(request.getCategory()));
+        }
+
+        Product saved = productRepository.save(product);
+        return mapToResponse(saved);
+    }
+
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
